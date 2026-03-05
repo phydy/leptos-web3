@@ -1,0 +1,454 @@
+/* ============================================================
+   app.css — Leptos Privy Auth
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Reset & base
+   ------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface-2: #22263a;
+    --border: #2e3350;
+    --text: #e8eaf0;
+    --text-muted: #7b82a0;
+    --accent: #7c6af7;
+    /* purple — Privy brand-ish */
+    --accent-hover: #6255d4;
+    --metamask: #f6851b;
+    --phantom: #ab9ff2;
+    --danger: #e05252;
+    --success: #4caf7d;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0, 0, 0, .45);
+    --transition: 0.18s ease;
+    font-size: 16px;
+}
+
+html,
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+a:hover {
+    color: var(--accent-hover);
+}
+
+/* ------------------------------------------------------------
+   Layout helpers
+   ------------------------------------------------------------ */
+.page {
+    min-height: calc(100vh - 64px);
+    /* nav height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+/* ------------------------------------------------------------
+   Top nav
+   ------------------------------------------------------------ */
+.top-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    background: rgba(15, 17, 23, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text);
+    letter-spacing: -.01em;
+}
+
+.nav-brand:hover {
+    color: var(--accent);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-link {
+    font-size: .9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: color var(--transition);
+}
+
+.nav-link:hover {
+    color: var(--text);
+}
+
+.wallet-address {
+    font-size: .85rem;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: .25rem .75rem;
+}
+
+.nav-btn {
+    padding: .4rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: .85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.nav-btn:hover {
+    background: var(--surface-2);
+    color: var(--text);
+    border-color: var(--text-muted);
+}
+
+.nav-btn.logout:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* ------------------------------------------------------------
+   Hero section (home page)
+   ------------------------------------------------------------ */
+.hero {
+    text-align: center;
+    max-width: 480px;
+    width: 100%;
+}
+
+.hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    margin-bottom: .5rem;
+    background: linear-gradient(135deg, #fff 40%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-size: 1.05rem;
+}
+
+/* ------------------------------------------------------------
+   Generic button
+   ------------------------------------------------------------ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .7rem 1.6rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: .95rem;
+    cursor: pointer;
+    border: none;
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+.btn:active {
+    transform: scale(.97);
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn.primary:hover {
+    opacity: .88;
+    color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Login panel
+   ------------------------------------------------------------ */
+.login-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.login-panel h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text);
+}
+
+.wallet-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+.wallet-btn {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+    padding: .85rem 1.25rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.wallet-btn:hover:not(:disabled) {
+    background: #2a2f47;
+    border-color: var(--text-muted);
+}
+
+.wallet-btn:active:not(:disabled) {
+    transform: scale(.98);
+}
+
+.wallet-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.wallet-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.wallet-btn.metamask {
+    border-left: 3px solid var(--metamask);
+}
+
+.wallet-btn.metamask:hover:not(:disabled) {
+    border-left-color: var(--metamask);
+}
+
+.wallet-btn.phantom {
+    border-left: 3px solid var(--phantom);
+}
+
+.wallet-btn.phantom:hover:not(:disabled) {
+    border-left-color: var(--phantom);
+}
+
+/* ------------------------------------------------------------
+   Error banner
+   ------------------------------------------------------------ */
+.error-banner {
+    background: rgba(224, 82, 82, .12);
+    border: 1px solid rgba(224, 82, 82, .35);
+    color: #f08080;
+    border-radius: var(--radius-sm);
+    padding: .65rem 1rem;
+    font-size: .875rem;
+    text-align: center;
+}
+
+/* ------------------------------------------------------------
+   Loading hint
+   ------------------------------------------------------------ */
+.loading-hint {
+    text-align: center;
+    font-size: .85rem;
+    color: var(--text-muted);
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------
+   Full-page loader
+   ------------------------------------------------------------ */
+.full-page-loader {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--text-muted);
+    font-size: .9rem;
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+/* ------------------------------------------------------------
+   Dashboard page
+   ------------------------------------------------------------ */
+.dashboard-page {
+    align-items: flex-start;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+}
+
+.dashboard-page h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    margin-bottom: 2rem;
+}
+
+.user-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    width: 100%;
+    box-shadow: var(--shadow);
+}
+
+.user-card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+}
+
+.user-card dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .6rem 1.5rem;
+    align-items: baseline;
+}
+
+.user-card dt {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+}
+
+.user-card dd {
+    font-size: .9rem;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    color: var(--text);
+    word-break: break-all;
+}
+
+/* ------------------------------------------------------------
+   404 page
+   ------------------------------------------------------------ */
+.not-found-page {
+    text-align: center;
+    gap: 1rem;
+}
+
+.not-found-page h1 {
+    font-size: 6rem;
+    font-weight: 900;
+    color: var(--border);
+    line-height: 1;
+}
+
+.not-found-page p {
+    color: var(--text-muted);
+    margin-bottom: .5rem;
+}
+
+/* ------------------------------------------------------------
+   Animations
+   ------------------------------------------------------------ */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .4;
+    }
+}
+
+/* ------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------ */
+@media (max-width: 480px) {
+    .top-nav {
+        padding: 0 1rem;
+    }
+
+    .login-panel {
+        padding: 1.5rem 1rem;
+    }
+
+    .dashboard-page {
+        padding: 2rem 1rem;
+    }
+
+    .user-card dl {
+        grid-template-columns: 1fr;
+        gap: .2rem;
+    }
+
+    .user-card dt {
+        margin-top: .75rem;
+    }
+}
