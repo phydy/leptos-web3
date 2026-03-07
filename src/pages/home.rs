@@ -22,7 +22,8 @@ pub fn HomePage() -> impl IntoView {
                 <section class="hero">
                     <h1>"You're in!"</h1>
                     <p>"Head to your dashboard."</p>
-                    <a href="/dashboard" class="btn primary">"Go to Dashboard →"</a>
+           <script type="module" src="/public/privy.bundle.js"></script>
+         <a href="/dashboard" class="btn primary">"Go to Dashboard →"</a>
                 </section>
             </Show>
         </div>

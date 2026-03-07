@@ -1,6 +1,4 @@
 /// Thin wrapper around localStorage for caching auth state across reloads.
-/// Privy manages the real token lifecycle; this just lets us show the correct
-/// UI instantly before the async Privy init completes.
 use web_sys::window;
 
 const SESSION_KEY: &str = "privy_session_active";
@@ -21,7 +19,6 @@ pub fn clear_session() {
 }
 
 /// Returns true if we previously saved a session.
-/// Privy will still re-validate the real token asynchronously.
 pub fn has_cached_session() -> bool {
     local_storage()
         .and_then(|s| s.get_item(SESSION_KEY).ok().flatten())

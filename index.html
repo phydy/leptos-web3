@@ -6,19 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leptos Privy Auth</title>
 
-  <!--
-      Bundle privy-bridge.js with your preferred bundler (Vite, esbuild, etc.)
-      pointing at public/privy-bridge.js — then adjust this path accordingly.
-
-      Quick start (no bundler):
-        npx esbuild public/privy-bridge.js \
-          --bundle --format=esm --outfile=public/privy-bridge.bundle.js
-<script type="module" src="/public/privy.bundle.js"></script>
-      
-    -->
-
   <link data-trunk rel="scss" href="public/app.scss" />
   <link data-trunk rel="rust" data-wasm-opt="z" />
+  <link data-trunk rel="copy-dir" href="/public/" />
 </head>
 
 <body></body>

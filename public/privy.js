@@ -1,72 +1,64 @@
-/**
- * privy-bridge.js
- *
- * Framework-agnostic Privy bridge for WASM interop.
- * Uses @privy-io/js-sdk-core — install with:
- *   npm install @privy-io/js-sdk-core
- *
- * Bundle with:
- *   npx esbuild public/privy-bridge.js \
- *     --bundle --format=esm --outfile=public/privy-bridge.bundle.js
- *
- * ⚠️  js-sdk-core is a low-level library.  Key API facts that differ from
- *    the React SDK or older docs:
- *
- *  1. DEFAULT export — `import Privy from "@privy-io/js-sdk-core"`
- *     There is NO named `PrivyClient` export.
- *
- *  2. Storage must be a plain {get,put,del,getKeys} object, NOT the raw
- *     localStorage reference.
- *
- *  3. Browser-extension wallets (MetaMask / Phantom) require a manual
- *     SIWE / SIWS handshake — there is no single `connectWallet()` helper:
- *
- *     MetaMask  →  window.ethereum   →  SIWE  (EIP-191 personal_sign)
- *     Phantom   →  window.solana     →  SIWS  (Solana signMessage)
- */
-
-// ✅  Default import + named LocalStorage helper — NOT { PrivyClient }
 import Privy, { LocalStorage } from "@privy-io/js-sdk-core";
 
-// Named exports — wasm-bindgen binds directly to these via
-// #[wasm_bindgen(module = "/public/privy-bridge.js")].
-// No window.* assignment needed; the JS module system guarantees
-// these are resolved before any WASM extern is called.
-
 // ---------------------------------------------------------------------------
-// Internal state
+// Module-level state
 // ---------------------------------------------------------------------------
 /** @type {InstanceType<typeof Privy> | null} */
 let privy = null;
+let _appId = "";
+let _session = null; // { token, refresh_token, user }
+
+const PRIVY_AUTH_URL = "https://auth.privy.io/api/v1";
+const SESSION_KEY = "privy_bridge_session";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function assertReady() {
-    if (!privy) throw new Error("Privy not initialised — call init() first");
+    if (!_appId) throw new Error("Bridge not initialised — call init() first");
+}
+
+/** Common headers required on every Privy auth REST call */
+function authHeaders() {
+    return {
+        "Content-Type": "application/json",
+        "privy-app-id": _appId,
+    };
 }
 
 /**
- * Walk the linkedAccounts array and find the first wallet account.
- * js-sdk-core exposes the wallet inside linkedAccounts, not as a top-level
- * `user.wallet` property.
+ * POST to a Privy auth endpoint, throw on non-2xx.
+ * @param {string} path  — e.g. "/siwe/init"
+ * @param {object} body
  */
-function findWallet(linkedAccounts, chainType) {
-    return (
-        linkedAccounts?.find(
-            (a) => a.type === "wallet" && (!chainType || a.chain_type === chainType)
-        ) ?? null
-    );
+async function privyPost(path, body) {
+    const res = await fetch(`${PRIVY_AUTH_URL}${path}`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        const msg = json?.message ?? json?.error ?? `HTTP ${res.status}`;
+        throw new Error(`Privy API error (${path}): ${msg}`);
+    }
+
+    return json;
 }
 
+/** Normalise the user object returned by either REST or sdk-core */
 function serializeUser(user) {
     if (!user) return null;
 
-    const linked = user.linkedAccounts ?? [];
-    const evmWallet = findWallet(linked, "ethereum");
-    const solWallet = findWallet(linked, "solana");
-    // Whichever we just linked is the "active" wallet
-    const wallet = evmWallet ?? solWallet ?? null;
+    // REST API returns linked_accounts (snake_case); sdk-core returns linkedAccounts
+    const linked = user.linked_accounts ?? user.linkedAccounts ?? [];
+
+    const wallet =
+        linked.find((a) => a.type === "wallet" && a.chain_type === "ethereum") ??
+        linked.find((a) => a.type === "wallet" && a.chain_type === "solana") ??
+        null;
 
     return {
         id: user.id,
@@ -74,116 +66,157 @@ function serializeUser(user) {
         wallet: wallet
             ? {
                 address: wallet.address,
-                chainType: wallet.chain_type,          // "ethereum" | "solana"
+                chainType: wallet.chain_type,
                 walletClient: wallet.wallet_client_type ?? wallet.connector_type ?? null,
             }
             : null,
-        createdAt: user.created_at ?? null,
+        createdAt: user.created_at ?? user.createdAt ?? null,
     };
 }
 
+/** Persist session to localStorage so page reloads restore auth state */
+function saveSession(session) {
+    _session = session;
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (_) { }
+}
+
+function clearSession() {
+    _session = null;
+    try { localStorage.removeItem(SESSION_KEY); } catch (_) { }
+}
+
+function loadSession() {
+    try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (raw) _session = JSON.parse(raw);
+    } catch (_) { }
+}
+
 // ---------------------------------------------------------------------------
-// Named exports — bound by wasm-bindgen via module = "/public/privy-bridge.js"
+// Named exports — wasm-bindgen binds these via module = "/privy-bridge.js"
 // ---------------------------------------------------------------------------
 
 /**
- * Initialise the Privy client.
- * @param {string} appId    — from the Privy dashboard (App Settings → App ID)
- * @param {string} clientId — from the Privy dashboard (App Settings → Client ID)
+ * Initialise the bridge. Must be called (and awaited) before any login.
  */
 export async function init(appId, clientId) {
-    // LocalStorage is Privy's built-in adapter — no custom {get,put,del,getKeys} needed.
-    // clientId is required alongside appId for the js-sdk-core constructor.
-    // There is no separate privy.init() call — the constructor handles setup.
-    privy = new Privy({
-        appId,
-        clientId,
-        storage: new LocalStorage(),
-    });
+    _appId = appId;
+    privy = new Privy({ appId, clientId, storage: new LocalStorage() });
+    loadSession();
 }
 
-// -----------------------------------------------------------------------------
-// MetaMask — SIWE (Sign-In with Ethereum)
-// -----------------------------------------------------------------------------
-export async function loginWithMetaMask() {
-    assertReady();
+// ---------------------------------------------------------------------------
+// Wallet connect — called directly from JS to preserve the browser's
+// user-gesture context. Rust's spawn_local breaks the gesture chain,
+// causing wallet popups to be silently blocked.
+// ---------------------------------------------------------------------------
 
+/**
+ * Trigger MetaMask connect popup and return the checksummed address.
+ * Must be called from within a click handler (user gesture).
+ * @returns {Promise<string>} checksummed Ethereum address
+ */
+export async function connectMetaMask() {
     const ethereum = window.ethereum;
-    if (!ethereum) throw new Error("MetaMask not found — install the extension");
-
+    if (!ethereum?.isMetaMask) {
+        throw new Error("MetaMask not found — install the extension");
+    }
+    // eth_requestAccounts triggers the popup; its return value is the
+    // authorised account list (checksummed). Do NOT call eth_accounts
+    // separately — that returns [] silently if not yet authorised.
     const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-    const address = accounts[0];
-    if (!address) throw new Error("No account returned from MetaMask");
-
-    const chainIdHex = await ethereum.request({ method: "eth_chainId" });
-    const chainId = parseInt(chainIdHex, 16);
-    const caip2 = `eip155:${chainId}`;
-
-    const siweMessage = await privy.auth.siwe.generateSiweMessage({
-        address,
-        chainId: caip2,
-    });
-
-    const signature = await ethereum.request({
-        method: "personal_sign",
-        params: [siweMessage, address],
-    });
-
-    const { user } = await privy.auth.siwe.loginWithSiwe({
-        message: siweMessage,
-        signature,
-    });
-
-    return serializeUser(user);
+    if (!accounts?.length) throw new Error("No account returned from MetaMask");
+    return accounts[0];
 }
 
-// -----------------------------------------------------------------------------
-// Phantom — SIWS (Sign-In with Solana)
-// -----------------------------------------------------------------------------
-export async function loginWithPhantom() {
-    assertReady();
-
+/**
+ * Trigger Phantom connect popup and return the base58 public key.
+ * Must be called from within a click handler (user gesture).
+ * @returns {Promise<string>} Solana public key (base58)
+ */
+export async function connectPhantom() {
     const solana = window.solana;
-    if (!solana?.isPhantom) throw new Error("Phantom not found — install the extension");
-
+    if (!solana?.isPhantom) {
+        throw new Error("Phantom not found — install the extension");
+    }
     await solana.connect();
     const address = solana.publicKey?.toString();
     if (!address) throw new Error("No public key returned from Phantom");
-
-    const siwsMessage = await privy.auth.siws.generateSiwsMessage({ address });
-
-    const encodedMessage = new TextEncoder().encode(siwsMessage);
-    const { signature: signatureBytes } = await solana.signMessage(encodedMessage, "utf8");
-
-    // Convert Uint8Array → base64 string that Privy expects
-    const signature = btoa(String.fromCharCode(...signatureBytes));
-
-    const { user } = await privy.auth.siws.loginWithSiws({
-        message: siwsMessage,
-        signature,
-    });
-
-    return serializeUser(user);
+    return address;
 }
 
-// -----------------------------------------------------------------------------
-// Session helpers
-// -----------------------------------------------------------------------------
+/**
+ * Disconnect Phantom. MetaMask has no disconnect API — clear state in Rust.
+ */
+export async function disconnectPhantom() {
+    const solana = window.solana;
+    if (solana?.isPhantom) {
+        try { await solana.disconnect(); } catch (_) { }
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+
+// flow_context is returned by /passwordless/init and must be echoed back
+// to /passwordless/authenticate to tie the OTP to the correct session.
+let _emailFlowContext = null;
+
+/**
+ * Step 1 — send a 6-digit OTP to the user's email.
+ * Privy endpoint: POST /passwordless/init
+ */
+export async function sendEmailCode(email) {
+    assertReady();
+    const res = await privyPost("/passwordless/init", {
+        email,
+        locale: "en",
+    });
+    // Persist the flow_context so verifyEmailCode can echo it back.
+    _emailFlowContext = res?.flow_context ?? null;
+}
+
+/**
+ * Step 2 — verify the OTP and exchange it for a session.
+ * Privy endpoint: POST /passwordless/authenticate
+ * @returns serialised user object
+ */
+export async function verifyEmailCode(email, code) {
+    assertReady();
+
+    const body = {
+        email,
+        code: code.trim(),
+        mode: "login-or-sign-up",
+    };
+
+    // flow_context links this request back to the init call — required by Privy.
+    if (_emailFlowContext) body.flow_context = _emailFlowContext;
+
+    const session = await privyPost("/passwordless/authenticate", body);
+
+    _emailFlowContext = null; // consumed — clear for next login attempt
+    saveSession(session);
+    return serializeUser(session.user);
+}
+
+
 export async function logout() {
     assertReady();
-    await privy.auth.logout();
+    clearSession();
+    try { await privy?.auth?.logout?.(); } catch (_) { }
 }
 
 export function getUser() {
-    if (!privy) return null;
-    return serializeUser(privy.user);
+    if (_session?.user) return serializeUser(_session.user);
+    if (privy?.user) return serializeUser(privy.user);
+    return null;
 }
 
 export function isAuthenticated() {
-    return privy?.user != null;
+    return !!(_session?.token ?? privy?.user);
 }
 
-export async function getAccessToken() {
-    assertReady();
-    return privy.getAccessToken?.() ?? null;
+export function getAccessToken() {
+    return _session?.token ?? null;
 }
