@@ -11,7 +11,6 @@ pub fn DashboardPage() -> impl IntoView {
     }
 }
 
-// The actual content — only rendered once RequireAuth confirms auth.
 #[component]
 fn DashboardInner() -> impl IntoView {
     let auth = use_auth();

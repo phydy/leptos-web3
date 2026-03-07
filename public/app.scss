@@ -1,5 +1,5 @@
 /* ============================================================
-   app.css — Leptos Privy Auth
+   app.css
    ============================================================ */
 
 /* ------------------------------------------------------------
@@ -428,8 +428,182 @@ a:hover {
 }
 
 /* ------------------------------------------------------------
-   Responsive
+   OR divider
    ------------------------------------------------------------ */
+.or-divider {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    color: var(--text-muted);
+    font-size: .8rem;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ------------------------------------------------------------
+   Email login panel
+   ------------------------------------------------------------ */
+.email-login-panel {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+.input-row {
+    display: flex;
+    gap: .5rem;
+}
+
+.email-input,
+.otp-input {
+    flex: 1;
+    padding: .75rem 1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: .95rem;
+    outline: none;
+    transition: border-color var(--transition);
+}
+
+.email-input::placeholder,
+.otp-input::placeholder {
+    color: var(--text-muted);
+}
+
+.email-input:focus,
+.otp-input:focus {
+    border-color: var(--accent);
+}
+
+.email-input:disabled,
+.otp-input:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.otp-input {
+    letter-spacing: .2em;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 1.1rem;
+    max-width: 130px;
+    text-align: center;
+}
+
+.otp-hint {
+    font-size: .875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.otp-hint strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* "Use a different email" */
+.link-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: .8rem;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    transition: color var(--transition);
+}
+
+.link-btn:hover {
+    color: var(--accent-hover);
+}
+
+/* New-style email form elements */
+.field-label {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+}
+
+.text-input {
+    width: 100%;
+    padding: .75rem 1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: .95rem;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.text-input::placeholder {
+    color: var(--text-muted);
+    opacity: .6;
+}
+
+.text-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 106, 247, .15);
+}
+
+.text-input:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.text-input.otp-input {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 1.4rem;
+    letter-spacing: .3em;
+    text-align: center;
+    max-width: 100%;
+}
+
+.btn.full-width {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: .85rem;
+    cursor: pointer;
+    padding: .25rem 0;
+    text-align: left;
+    transition: color var(--transition);
+}
+
+.btn-text:hover:not(:disabled) {
+    color: var(--text);
+}
+
+.btn-text:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+/* Responsive: stack input-row on very small screens */
+@media (max-width: 360px) {
+    .input-row {
+        flex-direction: column;
+    }
+
+    .otp-input {
+        max-width: 100%;
+    }
+}
+
 @media (max-width: 480px) {
     .top-nav {
         padding: 0 1rem;

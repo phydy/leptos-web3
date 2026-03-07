@@ -58,3 +58,13 @@ open = false
 # tls_cert_path = "self_signed_certs/cert.pem"
 # Additional headers to send. NOTE: header names must be valid HTTP headers.
 # headers = { "X-Foo" = "bar" }
+
+#[[hooks]]
+#stage = "pre_build"
+#command = "esbuild"
+#command_arguments = [
+#    "bublic/privy.js",
+#    "--bundle",
+#    "--format=esm",
+#    "--outfile=public/privy.bundle.js",
+#]
