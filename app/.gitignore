@@ -1,0 +1,5 @@
+/target
+/dist
+/node_modules
+.env
+public/privy.bundle.js

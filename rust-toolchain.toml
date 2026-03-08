@@ -1,2 +1,5 @@
 [toolchain]
-channel = "stable"
+channel = "nightly"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
+anchor_version = "0.31.1"

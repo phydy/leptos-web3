@@ -1,5 +1,5 @@
 /* ============================================================
-   app.css
+   app.css — Leptos Privy Auth
    ============================================================ */
 
 /* ------------------------------------------------------------
@@ -333,57 +333,252 @@ a:hover {
    Dashboard page
    ------------------------------------------------------------ */
 .dashboard-page {
-    align-items: flex-start;
-    max-width: 680px;
+    align-items: stretch;
+    max-width: 960px;
+    width: 100%;
     margin: 0 auto;
-    padding: 3rem 1.5rem;
+    padding: 2.5rem 1.5rem 4rem;
+    justify-content: flex-start;
 }
 
 .dashboard-page h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
-    letter-spacing: -.02em;
-    margin-bottom: 2rem;
+    letter-spacing: -.025em;
+    margin-bottom: 1.75rem;
+    color: var(--text);
 }
 
+/* ── Identity card ─────────────────────────────────────────── */
 .user-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.75rem;
+    padding: 1.5rem 1.75rem;
     width: 100%;
     box-shadow: var(--shadow);
+    margin-bottom: 2rem;
 }
 
 .user-card h2 {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: .7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: .1em;
     color: var(--text-muted);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 
 .user-card dl {
     display: grid;
     grid-template-columns: max-content 1fr;
-    gap: .6rem 1.5rem;
+    gap: .55rem 1.75rem;
     align-items: baseline;
 }
 
 .user-card dt {
-    font-size: .8rem;
+    font-size: .75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .05em;
+    letter-spacing: .06em;
     color: var(--text-muted);
+    white-space: nowrap;
 }
 
 .user-card dd {
-    font-size: .9rem;
+    font-size: .875rem;
     font-family: "JetBrains Mono", "Fira Code", monospace;
     color: var(--text);
     word-break: break-all;
+}
+
+/* ── Section heading above panels ─────────────────────────── */
+.panels-heading {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+/* ── Action panels grid ────────────────────────────────────── */
+.action-panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.action-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.35rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.action-panel:hover {
+    border-color: rgba(124, 106, 247, .35);
+    box-shadow: 0 0 0 1px rgba(124, 106, 247, .1), var(--shadow);
+}
+
+.action-panel h3 {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: .1rem;
+}
+
+/* ── Inputs inside panels ──────────────────────────────────── */
+.action-input {
+    width: 100%;
+    padding: .6rem .85rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: .85rem;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    resize: vertical;
+    min-height: 2.4rem;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.action-input::placeholder {
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--text-muted);
+    opacity: .6;
+}
+
+.action-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 106, 247, .12);
+}
+
+textarea.action-input {
+    min-height: 3.5rem;
+    line-height: 1.5;
+}
+
+/* ── Action button ─────────────────────────────────────────── */
+.action-btn {
+    padding: .55rem 1.1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: opacity var(--transition), transform var(--transition);
+    white-space: nowrap;
+}
+
+.action-btn:hover:not(:disabled) {
+    opacity: .87;
+}
+
+.action-btn:active:not(:disabled) {
+    transform: scale(.97);
+}
+
+.action-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+/* ── Result / error rows ───────────────────────────────────── */
+.action-result {
+    border-radius: var(--radius-sm);
+    padding: .55rem .85rem;
+    font-size: .78rem;
+    line-height: 1.5;
+    word-break: break-all;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.action-result.success {
+    background: rgba(76, 175, 125, .08);
+    border: 1px solid rgba(76, 175, 125, .25);
+    color: #6dd9a8;
+}
+
+.action-result.error {
+    background: rgba(224, 82, 82, .08);
+    border: 1px solid rgba(224, 82, 82, .25);
+    color: #f08080;
+}
+
+.action-result .label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    opacity: .7;
+}
+
+.action-result .monospace {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: .8rem;
+    word-break: break-all;
+}
+
+/* ── No-wallet notice ──────────────────────────────────────── */
+.no-wallet-notice {
+    width: 100%;
+    margin-top: .5rem;
+    padding: 2rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: .9rem;
+    line-height: 1.6;
+}
+
+.no-wallet-notice p {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+/* ── Monospace utility ─────────────────────────────────────── */
+.monospace {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: .85em;
+    word-break: break-all;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .dashboard-page {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .action-panels {
+        grid-template-columns: 1fr;
+    }
+
+    .user-card dl {
+        grid-template-columns: 1fr;
+        gap: .15rem;
+    }
+
+    .user-card dt {
+        margin-top: .6rem;
+    }
 }
 
 /* ------------------------------------------------------------
@@ -612,17 +807,6 @@ a:hover {
     .login-panel {
         padding: 1.5rem 1rem;
     }
-
-    .dashboard-page {
-        padding: 2rem 1rem;
-    }
-
-    .user-card dl {
-        grid-template-columns: 1fr;
-        gap: .2rem;
-    }
-
-    .user-card dt {
-        margin-top: .75rem;
-    }
 }
+
+/* ── end ── */
