@@ -7,6 +7,9 @@ use crate::privy::{
     privy_logout,
     privy_send_email_code,
     privy_verify_email_code,
+    privy_connect_metamask,
+    privy_connect_phantom,
+    privy_disconnect_phantom,
     PrivyUser
 };
 use crate::auth::session::{
@@ -14,8 +17,8 @@ use crate::auth::session::{
     has_cached_session,
     save_session
 };
-use crate::utils::metamask::MetaMask;
-use crate::utils::phantom::Phantom;
+//use crate::utils::metamask::MetaMask;
+//use crate::utils::phantom::Phantom;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum WalletType {
@@ -61,13 +64,7 @@ impl AuthContext {
     }
 
     async fn do_connect_metamask() -> Result<String, wasm_bindgen::JsValue> {
-        let mm = MetaMask::new()?;
-        // request_accounts triggers the popup and returns the authorised list directly.
-        let accounts = mm.request_accounts().await?;
-        accounts
-            .get(0)
-            .as_string()
-            .ok_or_else(|| wasm_bindgen::JsValue::from_str("No account returned from MetaMask"))
+        privy_connect_metamask().await
     }
 
     pub fn connect_phantom(self) {
@@ -81,9 +78,7 @@ impl AuthContext {
     }
 
     async fn do_connect_phantom() -> Result<String, wasm_bindgen::JsValue> {
-        let phantom = Phantom::new()?;
-        phantom.connect().await?;
-        phantom.public_key()
+        privy_connect_phantom().await
     }
 
     // ------------------------------------------------------------------
@@ -97,14 +92,11 @@ impl AuthContext {
         let wtype = self.wallet_type.get_untracked();
         spawn_local(async move {
             if wtype == Some(WalletType::Phantom) {
-                if let Ok(phantom) = Phantom::new() {
-                    let _ = phantom.disconnect().await;
-                }
+                let _ = privy_disconnect_phantom().await;
             }
             // MetaMask: no programmatic disconnect API — clear state only.
             self.set_wallet_address.set(None);
             self.set_wallet_type.set(None);
-            // Only mark as unauthenticated if there's no active Privy session
             if self.user.get_untracked().is_none() {
                 self.set_authenticated.set(false);
             }
@@ -152,11 +144,8 @@ impl AuthContext {
 
     pub fn logout(self) {
         spawn_local(async move {
-            // Disconnect Phantom if active
             if self.wallet_type.get_untracked() == Some(WalletType::Phantom) {
-                if let Ok(phantom) = Phantom::new() {
-                    let _ = phantom.disconnect().await;
-                }
+                let _ = privy_disconnect_phantom().await;
             }
             let _ = privy_logout().await;
             clear_session();
